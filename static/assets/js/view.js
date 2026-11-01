@@ -1,14 +1,16 @@
-import { loadProxyWorker, encoder, storage, loadCJS, setTransport } from './utils.js';
+import { loadProxyWorker, encoder, storage, setTransport } from './utils.js';
 import { loadSettings } from './settings.js';
-
-await loadCJS('/baremux/bare.cjs');
 
 loadSettings();
 
 const params = new URLSearchParams(location.search);
 const settingsStorage = storage('settings');
 
-if ((settingsStorage.get('proxy') || 'uv').startsWith('uv')) await setTransport((settingsStorage.get('proxy') || '').split(':')[1] || 'libcurl');
+// A failing transport only matters for proxied targets, so let games that are
+// served from this origin carry on loading instead of stalling here.
+if ((settingsStorage.get('proxy') || 'uv').startsWith('uv')) try {
+    await setTransport((settingsStorage.get('proxy') || '').split(':')[1] || 'epoxy');
+} catch (e) { console.error(e); }
 
 window.history.replaceState({}, '', location.pathname);
 

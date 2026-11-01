@@ -65,29 +65,41 @@ export const loadProxyWorker = async (proxy) => await navigator.serviceWorker.re
 });
 
 /**
+ * The websocket endpoint the proxy transports tunnel through. Static deploys
+ * set this at build time because they cannot serve /wisp/ themselves.
+ * @returns {string}
+ */
+export const wispURL = () => globalThis.__POLARIS_WISP_URL__ || location.origin.replace('http', 'ws') + '/wisp/';
+
+/**
+ * @type {any}
+ */
+var bareConnection;
+
+/**
  * Set the bare transport
- * @param {'epoxy' | 'libcurl' | 'bare'} name 
+ * @param {'epoxy'} name 
  * @param {any} options 
  */
 export const setTransport = async (name, options) => {
     const transports = {
         'epoxy': {
-            src: '/epoxy/index.js',
-            id: 'EpxMod.EpoxyClient',
+            src: '/epoxy/index.mjs',
             options: {
-                wisp: location.origin.replace('http', 'ws') + '/wisp/'
+                wisp: wispURL()
             }
         }
     };
 
-    if (!Object.keys(transports).includes(name)) throw 'Invalid Transport';
+    if (!Object.keys(transports).includes(name)) throw new PolarisError(`Invalid transport '${name}'`);
 
     const transport = transports[name];
 
-    await loadCJS(transport.src);
-    await loadCJS('/baremux/bare.cjs');
+    await loadCJS('/baremux/index.js');
 
-    BareMux.SetTransport(transport.id, options || transport.options);
+    if (!bareConnection) bareConnection = new BareMux.BareMuxConnection('/baremux/worker.js');
+
+    await bareConnection.setTransport(transport.src, [options || transport.options]);
 }
 
 /**
@@ -184,10 +196,15 @@ export const isScrollable = (element) => element.scrollWidth > element.clientWid
 export const evalify = (code) => '(' + String(code) + ')()';
 
 export const loadCJS = (src) => new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[src='${src}']`);
+
+    if (existing) return resolve();
+
     const el = document.createElement('script');
     el.src = src;
-    document.body.appendChild(el);
     el.onload = () => resolve();
+    el.onerror = () => reject(new PolarisError(`Failed to load ${src}`));
+    document.body.appendChild(el);
 });
 
 /**
@@ -202,6 +219,7 @@ try {
 export default {
     storage,
     loadProxyWorker,
+    wispURL,
     encoder,
     redirect,
     createViewPage,

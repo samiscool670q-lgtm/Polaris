@@ -27,3 +27,19 @@
 3. Start the app: `npm start`
 4. Visit [localhost:8080](http://localhost:8080) for your local Polaris!
 
+
+<br>
+
+## Netlify Deployment
+
+Netlify serves Polaris as a static site. `npm run build:static` renders the
+`templates/` partials into every page, writes the `/api` catalogs as JSON files
+and vendors the proxy client into `dist/`, which is what gets published. The
+`/cdn` asset host and `/api/favicon` are handled by an edge function and a
+function respectively, so no long running server is involved.
+
+One piece cannot move to a static host: the `/wisp/` websocket endpoint that the
+Ultraviolet transports tunnel through. Games served from `/cdn` do not need it
+and work as-is, but proxying an external site does. Point the deploy at a wisp
+server you run elsewhere by setting the `POLARIS_WISP_URL` environment variable,
+for example `wss://wisp.example.com/wisp/`.

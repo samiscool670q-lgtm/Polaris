@@ -15,7 +15,7 @@ export default () => new Promise(async (resolve, reject) => {
             try {
                 analyticsData = await (await fetch('/api/analytics/site/' + location.hostname)).json();
                 analyticsPreferences.set('savedResponse', analyticsData);
-            } catch (e) { analyticsPreferences.set('enabled', false); resolve({}); window.umami = window.umami || umamiSpoof; }
+            } catch (e) { analyticsPreferences.set('enabled', false); window.umami = window.umami || umamiSpoof; return resolve({}); }
         } else analyticsData = analyticsPreferences.get('savedResponse');
 
         if (analyticsData.success && analyticsData.data.domain === location.hostname) {

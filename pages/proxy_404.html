@@ -33,7 +33,8 @@
             }));
         }
 
-        await loadCJS('/baremux/bare.cjs');
+        try { await loadCJS('/baremux/index.js'); }
+        catch (e) { console.error(e); }
 
         if (location.pathname.slice(1).startsWith((settingsStorage.get('proxy') || '').split(':')[0] || 'uv')) loadProxyWorker((settingsStorage.get('proxy') || '').split(':')[0] || 'uv')
             .then(() => location.reload())
