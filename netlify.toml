@@ -1,0 +1,62 @@
+[build]
+    command = "node scripts/build-static.mjs"
+    publish = "dist"
+
+[build.environment]
+    NODE_VERSION = "24"
+
+[functions]
+    directory = "netlify/functions"
+
+[build.processing.html]
+    pretty_urls = true
+
+# The /api endpoints are generated as JSON files at build time; these keep the
+# paths the front end asks for.
+[[redirects]]
+    from = "/api/games"
+    to = "/api/games.json"
+    status = 200
+
+[[redirects]]
+    from = "/api/apps"
+    to = "/api/apps.json"
+    status = 200
+
+[[redirects]]
+    from = "/api/cheats"
+    to = "/api/cheats.json"
+    status = 200
+
+[[redirects]]
+    from = "/api/changelog"
+    to = "/api/changelog.json"
+    status = 200
+
+# Proxy requests only resolve once the service worker has claimed the scope.
+# Until then, show the loading page that registers it.
+[[redirects]]
+    from = "/uv/service/*"
+    to = "/proxy_404.html"
+    status = 200
+
+[[redirects]]
+    from = "/index"
+    to = "/"
+    status = 301
+
+[[headers]]
+    for = "/uv/sw.js"
+    [headers.values]
+        Service-Worker-Allowed = "/"
+        Cache-Control = "no-cache"
+
+[[headers]]
+    for = "/uv/uv.config.js"
+    [headers.values]
+        Cache-Control = "no-cache"
+
+[[headers]]
+    for = "/assets/js/config.js"
+    [headers.values]
+        Cache-Control = "no-cache"
